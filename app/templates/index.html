@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚾ 야구 규칙 RAG 검증 대시보드</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { color: #1e3a8a; margin-bottom: 5px; }
+        .search-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        .search-form { display: flex; gap: 10px; }
+        .search-input { flex: 1; padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; outline: none; transition: border 0.2s; }
+        .search-input:focus { border-color: #3b82f6; }
+        .search-btn { padding: 0 30px; background-color: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        .search-btn:hover { background-color: #2563eb; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); min-height: 250px; }
+        .card-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f1f5f9; display: flex; align-items: center; gap: 8px; }
+        .pure-title { color: #dc2626; }
+        .rag-title { color: #16a34a; }
+        .response-content { line-height: 1.6; font-size: 15px; white-space: pre-wrap; }
+        .placeholder { color: #94a3b8; font-style: italic; text-align: center; margin-top: 50px; }
+        
+        .context-section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .context-title { font-size: 18px; font-weight: bold; color: #1e3a8a; margin-bottom: 15px; }
+        .context-item { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #3b82f6; }
+        .context-meta { display: flex; justify-content: space-between; font-size: 13px; color: #64748b; margin-bottom: 8px; font-weight: bold; }
+        .score-badge { background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>⚾ 야구 규칙 지식 주입형 RAG 시스템</h1>
+        <p style="color: #64748b; margin: 0;">Qdrant 벡터 검색 + BGE Reranker + Ollama Llama3 비교 대시보드</p>
+    </header>
+
+    <div class="search-box">
+        <form action="/search" method="POST" class="search-form">
+            <input type="text" name="question" class="search-input" placeholder="야구 규칙에 대해 질문해보세요! (예: 인필드 플라이 조건이 뭐야?)" value="{{ question }}" required>
+            <button type="submit" class="search-btn">질문하기</button>
+        </form>
+    </div>
+
+    {% if question %}
+    <div class="grid">
+        <div class="card">
+            <div class="card-title pure-title">❌ 순수 오리지널 LLM (Llama3)</div>
+            <div class="response-content">{{ pure_llm }}</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title rag-title">✅ 야구 데이터 주입형 RAG LLM</div>
+            <div class="response-content">{{ rag_llm }}</div>
+        </div>
+    </div>
+
+    <div class="context-section">
+        <div class="context-title">🔍 리랭커(Reranker)가 엄선하여 LLM에게 주입한 Top 3 규칙 조각</div>
+        {% if context_used %}
+            {% for item in context_used %}
+            <div class="context-item">
+                <div class="context-meta">
+                    <span>📄 출처: 야구규칙백과 PDF - {{ item.page }} 페이지</span>
+                    <span class="score-badge">Rerank 정밀 매칭 점수: {{ item.score }}</span>
+                </div>
+                <div style="font-size: 14px; line-height: 1.5; color: #334155;">{{ item.text }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="color: #94a3b8;">검색된 관련 규칙 문서가 없습니다.</p>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="placeholder">
+        <p>상단 검색창에 야구 규칙 질문을 입력하시면 양쪽 모델의 답변 차이와 인프라 작동 결과를 실시간 비교합니다.</p>
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>
