@@ -13,7 +13,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "app", "templates"))
 
 # 2. 고성능 AI 모델 및 DB 인프라 로드
-print("🔄 인프라 및 AI 모델 로드 중...")
+print("인프라 및 AI 모델 로드 중...")
 
 # 1) Qdrant 연결
 qdrant_client = QdrantClient(host="localhost", port=6333)
@@ -26,7 +26,7 @@ bi_encoder = SentenceTransformer('intfloat/multilingual-e5-base')
 # 최초 실행 시 다운로드로 인해 시간이 다소 걸릴 수 있습니다.
 reranker = CrossEncoder('BAAI/bge-reranker-large')
 
-print("✅ 모든 AI 모델 및 DB 연결 완료! 서버를 가동합니다.")
+print("모든 AI 모델 및 DB 연결 완료! 서버를 가동합니다.")
 
 @app.get("/")
 async def index_page(request: Request):
@@ -38,7 +38,7 @@ async def index_page(request: Request):
 
 @app.post("/search")
 async def handle_rag_query(request: Request, question: str = Form(...)):
-    print(f"\n📥 유저 질문 입력됨: {question}")
+    print(f"\n 유저 질문 입력됨: {question}")
     
     # ----------------------------------------------------
     # STEP 1: 순수 LLM 답변 (야구 규칙 데이터가 없을 때)
@@ -55,7 +55,7 @@ async def handle_rag_query(request: Request, question: str = Form(...)):
         if res.status_code == 200:
             pure_llm_answer = res.json().get("response", "")
     except Exception as e:
-        print(f"⚠️ 순수 LLM 요청 실패: {e}")
+        print(f" 순수 LLM 요청 실패: {e}")
 
     # ----------------------------------------------------
     # STEP 2: Qdrant 고밀도 벡터 검색 (1차 Dense Retrieval)
@@ -113,6 +113,7 @@ async def handle_rag_query(request: Request, question: str = Form(...)):
     rag_prompt = f"""당신은 공식 야구 규칙에 기반하여 답변하는 전문 봇입니다. 
 아래 제공된 [야구 규칙 데이터]를 기반으로 사용자의 질문에 정확하게 답변하세요. 
 주어진 데이터에 없는 내용은 유추해서 지어내지 말고, 모른다면 솔직하게 모른다고 답하세요.
+반드시! 무조건! 한국어(Korean)로만 자연스럽게 답변하세요. 영어로 답변하지 마세요.
 
 [야구 규칙 데이터]
 {context_str}
@@ -132,7 +133,7 @@ async def handle_rag_query(request: Request, question: str = Form(...)):
         if res.status_code == 200:
             rag_llm_answer = res.json().get("response", "")
     except Exception as e:
-        print(f"⚠️ RAG LLM 요청 실패: {e}")
+        print(f" RAG LLM 요청 실패: {e}")
 
     # ----------------------------------------------------
     # STEP 5: 연동 결과를 대시보드 템플릿에 바인딩하여 렌더링
