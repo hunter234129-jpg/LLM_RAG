@@ -40,47 +40,37 @@
     </header>
 
     <div class="search-box">
-        <form action="/search" method="POST" class="search-form">
-            <input type="text" name="question" class="search-input" placeholder="야구 규칙에 대해 질문해보세요! (예: 인필드 플라이 조건이 뭐야?)" value="{{ question }}" required>
+        <form onsubmit="startStreamingSearch(event)" class="search-form">
+            <input type="text" id="questionInput" class="search-input" placeholder="야구 규칙에 대해 질문해보세요! (예: 인필드 플라이 조건이 뭐야?)" required>
             <button type="submit" class="search-btn">질문하기</button>
         </form>
     </div>
 
-    {% if question %}
-    <div class="grid">
-        <div class="card">
-            <div class="card-title pure-title">❌ 순수 오리지널 LLM (Llama3)</div>
-            <div class="response-content">{{ pure_llm }}</div>
-        </div>
-
-        <div class="card">
-            <div class="card-title rag-title">✅ 야구 데이터 주입형 RAG LLM</div>
-            <div class="response-content">{{ rag_llm }}</div>
-        </div>
-    </div>
-
-    <div class="context-section">
-        <div class="context-title">🔍 리랭커(Reranker)가 엄선하여 LLM에게 주입한 Top 3 규칙 조각</div>
-        {% if context_used %}
-            {% for item in context_used %}
-            <div class="context-item">
-                <div class="context-meta">
-                    <span>📄 출처: 야구규칙백과 PDF - {{ item.page }} 페이지</span>
-                    <span class="score-badge">Rerank 정밀 매칭 점수: {{ item.score }}</span>
-                </div>
-                <div style="font-size: 14px; line-height: 1.5; color: #334155;">{{ item.text }}</div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <p style="color: #94a3b8;">검색된 관련 규칙 문서가 없습니다.</p>
-        {% endif %}
-    </div>
-    {% else %}
-    <div class="placeholder">
+    <div id="welcomePlaceholder" class="placeholder">
         <p>상단 검색창에 야구 규칙 질문을 입력하시면 양쪽 모델의 답변 차이와 인프라 작동 결과를 실시간 비교합니다.</p>
     </div>
-    {% endif %}
+
+    <div id="mainDashboard" style="display: none;">
+        <div class="grid">
+            <div class="card">
+                <div class="card-title pure-title">❌ 순수 오리지널 LLM (Llama3)</div>
+                <div id="pureResultContent" class="response-content"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title rag-title">✅ 야구 데이터 주입형 RAG LLM</div>
+                <div id="ragResultContent" class="response-content"></div>
+            </div>
+        </div>
+
+        <div class="context-section">
+            <div class="context-title">🔍 리랭커(Reranker)가 엄선하여 LLM에게 주입한 Top 3 규칙 조각</div>
+            <div id="contextResultList">
+                </div>
+        </div>
+    </div>
 </div>
 
+<script src="/static/js/chat.js"></script>
 </body>
 </html>
