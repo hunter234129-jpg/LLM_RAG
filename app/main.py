@@ -1,15 +1,39 @@
 import os
 import requests
+import uuid
+from contextlib import asynccontextmanager
 import json
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, HTTPException, Depends, status
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from qdrant_client import QdrantClient
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, RedirectResponse
 from sentence_transformers import SentenceTransformer, CrossEncoder
 import httpx
+import bcrypt
+import redis.asyncio as aioredis
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy import text
+from dotenv import load_dotenv
 
-app = FastAPI()
+load_dotenv() 
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+engine = create_async_engine(DATABASE_URL, echo=False, pool_pre_ping=True, pool_recycle=3600)
+redis_client = aioredis.from_url("redis://localhost:6379", decode_responses=True)
+
+# 2. FastAPI Lifespan 자원 관리 (서버 온/오프시 안정적으로 커넥션 닫기)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("🚀 [인프라 스타트업] AI 모델 및 인프라 로드 중...")
+    yield
+    # 서버 종료 시 커넥션 풀 및 클라이언트 리소스 안전하게 반환 (메모리 누수 차단)
+    await engine.dispose()
+    await redis_client.close()
+    await async_http_client.aclose()
+    print("🛑 [인프라 셧다운] 모든 데이터베이스 및 HTTP 클라이언트 연결 해제 완료.")
+
+app = FastAPI(lifespan=lifespan) # 서버클라이언트들 연결된채 종료 방지
 
 # 1. 경로 및 템플릿 설정
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

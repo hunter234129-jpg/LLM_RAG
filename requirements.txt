@@ -73,3 +73,9 @@ uvicorn==0.49.0
 websockets==16.0
 xxhash==3.7.1
 zstandard==0.25.0
+dotenv
+sqlalchemy
+redis
+bcrypt
+contextlib2
+uuid
