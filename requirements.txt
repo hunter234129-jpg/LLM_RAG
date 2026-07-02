@@ -79,3 +79,4 @@ redis
 bcrypt
 contextlib2
 uuid
+bcrypt
